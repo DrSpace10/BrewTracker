@@ -1,32 +1,26 @@
 {
   "name": "BrewTracker",
   "short_name": "BrewTracker",
-  "description": "Diário de cafés especiais — extrações, receitas e equipamentos.",
-  "start_url": "./",
-  "scope": "./",
+  "description": "Diário de extração e rastreamento de cafés especiais",
+  "start_url": "./index.html",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#1E0F05",
-  "theme_color": "#1E0F05",
-  "lang": "pt-BR",
+  "background_color": "#FAF5EE",
+  "theme_color": "#4A332D",
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icons/icon-1024.png",
       "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     }
   ]
 }

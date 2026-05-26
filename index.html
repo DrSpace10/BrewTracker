@@ -1,20 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BrewTracker</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4A332D"> <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
-  <link rel="shortcut icon" href="favicon.ico">
 
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4A332D">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="BrewTracker">
+  
+  <link rel="apple-touch-icon" href="icons/icon-1024.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 
-  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 
-  <script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <div class="app-title">café <em>diário</em></div>
+    <div class="hd" id="hd"></div>
+  </div>
+  <i class="ti ti-coffee" style="font-size:22px;color:var(--cw)" aria-hidden="true"></i>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" data-tab="diario"><i class="ti ti-notebook"></i>Diário</button>
+  <button class="tab" data-tab="cafes"><i class="ti ti-plant"></i>Cafés</button>
+  <button class="tab" data-tab="receitas"><i class="ti ti-clipboard-list"></i>Receitas</button>
+  <button class="tab" data-tab="metodos"><i class="ti ti-filter"></i>Métodos</button>
+  <button class="tab" data-tab="equipamentos"><i class="ti ti-tool"></i>Equipamentos</button>
+</div>
+
+<div class="content">
+
+  <div id="panel-diario" class="panel active">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="st-ext">0</div><div class="stat-lbl">Extrações hoje</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-g">0g</div><div class="stat-lbl">Café usado</div></div>
+      <div class="stat-card"><div class="stat-num" id="st-score">—</div><div class="stat-lbl">Score médio</div></div>
+    </div>
+    <button class="add-btn" onclick="toggleForm('form-diario')"><i class="ti ti-plus"></i>Registrar extração</button>
+
+    <div id="form-diario" class="hidden">
+      <div class="form-modal">
+        <div class="form-group-label">Referências</div>
+        <div class="form-grid g4">
+          <div class="fg"><label>Data</label><input type="date" id="d-data"></div>
+          <div class="fg"><label>Hora</label><input type="time" id="d-hora"></div>
+          <div class="fg"><label>Receita base</label><select id="d-receita" onchange="autoFillDiario()"><option value="">— nenhuma —</option></select></div>
+          <div class="fg"><label>Café</label><select id="d-cafe"><option value="">— selecionar —</option></select></div>
+          <div class="fg"><label>Método</label><select id="d-metodo"><option value="">— selecionar —</option></select></div>
+          <div class="fg"><label>Moedor</label><select id="d-moedor"><option value="">— selecionar —</option></select></div>
+        </div>
+
+        <div class="form-group-label">Parâmetros reais</div>
+        <div class="form-grid g4">
+          <div class="fg"><label>Dose real [g]</label><input type="number" id="d-dose" step="0.1" oninput="calcDiarioRatio()"></div>
+          <div class="fg"><label>Rendimento [ml/g]</label><input type="number" id="d-rend" step="1" oninput="calcDiarioRatio()"></div>
+          <div class="fg"><label>Proporção real</label><input type="text" id="d-prop" readonly placeholder="1:0"></div>
+          <div class="fg"><label>Temp. real [°C]</label><input type="number" id="d-temp"></div>
+          <div class="fg"><label>Ajuste do moedor</label><input type="text" id="d-clique" placeholder="ex: 28"></div>
+          <div class="fg"><label>Tempo real</label><input type="text" id="d-tempo" placeholder="ex: 3:30"></div>
+        </div>
+
+        <div class="form-group-label">Análise</div>
+        <div class="form-grid g4">
+          <div class="fg"><label>TDS [%]</label><input type="number" id="d-tds" step="0.01" oninput="calcEY()"></div>
+          <div class="fg"><label>EY [%] (auto)</label><input type="text" id="d-ey" readonly placeholder="0.00%"></div>
+          <div class="fg"><label>Score geral</label>
+            <select id="d-score">
+              <option value="">—</option>
+              <option>6.0</option><option>6.5</option><option>7.0</option><option>7.5</option>
+              <option>8.0</option><option>8.5</option><option>9.0</option><option>9.5</option><option>10.0</option>
+            </select>
+          </div>
+          <div class="fg"><label>Doçura</label>
+            <select id="d-docura"><option value="">—</option><option>Baixa</option><option>Média</option><option>Alta</option></select>
+          </div>
+          <div class="fg"><label>Acidez</label>
+            <select id="d-acidez"><option value="">—</option><option>Baixa</option><option>Média</option><option>Alta</option><option>Brilhante</option></select>
+          </div>
+          <div class="fg"><label>Corpo</label>
+            <select id="d-corpo"><option value="">—</option><option>Leve</option><option>Médio</option><option>Encorpado</option><option>Cremoso</option></select>
+          </div>
+          <div class="fg fg-check"><input type="checkbox" id="d-amargor"><label for="d-amargor">Amargor presente</label></div>
+          <div class="fg span2"><label>Notas de sabor</label><input type="text" id="d-notas" placeholder="ex: caramelo, ameixa, castanha..."></div>
+          <div class="fg span2"><label>Observações</label><textarea id="d-obs" placeholder="Técnica, impressões, próximas alterações..."></textarea></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleForm('form-diario')">Cancelar</button>
+          <button class="btn-save" onclick="saveDiario()">Salvar extração</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="diario-list"></div>
+  </div>
+
+  <div id="panel-cafes" class="panel">
+    <button class="add-btn" onclick="toggleForm('form-cafe')"><i class="ti ti-plus"></i>Adicionar café</button>
+
+    <div id="form-cafe" class="hidden">
+      <div class="form-modal">
+        <div class="form-group-label">Identificação</div>
+        <div class="form-grid g3">
+          <div class="fg span2"><label>Nome do café *</label><input type="text" id="c-nome" placeholder="ex: Fazenda Ambiental – Catuaí Vermelho"></div>
+          <div class="fg"><label>Fazenda</label><input type="text" id="c-fazenda" placeholder="Nome da fazenda"></div>
+          <div class="fg"><label>Produtor</label><input type="text" id="c-produtor"></div>
+          <div class="fg"><label>País de origem</label><input type="text" id="c-pais" placeholder="Brasil"></div>
+          <div class="fg"><label>Região</label><input type="text" id="c-regiao" placeholder="ex: Mogiana, SP"></div>
+          <div class="fg"><label>Altitude [m]</label><input type="number" id="c-altitude" placeholder="1200"></div>
+        </div>
+
+        <div class="form-group-label">Botânica e processo</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Espécie</label>
+            <select id="c-especie">
+              <option>Arábica</option><option>Canephora / Robusta</option><option>Outra</option>
+            </select>
+          </div>
+          <div class="fg"><label>Variedade</label><input type="text" id="c-variedade" placeholder="ex: Bourbon, Geisha, Catuaí..."></div>
+          <div class="fg"><label>Processo</label>
+            <select id="c-processo">
+              <option>Natural</option><option>Lavado (Washed)</option><option>Honey</option>
+              <option>Pulped Natural</option><option>Semi-Lavado</option>
+              <option>Fermentação anaeróbica</option><option>Double Fermentation</option>
+              <option>Carbonic Maceration</option><option>Outro</option>
+            </select>
+          </div>
+          <div class="fg fg-check"><input type="checkbox" id="c-decaf"><label for="c-decaf">Descafeinado</label></div>
+        </div>
+
+        <div class="form-group-label">Torra</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Torrefador</label><input type="text" id="c-torr" placeholder="ex: Octavio Café"></div>
+          <div class="fg"><label>Nível de torra</label>
+            <select id="c-torra">
+              <option>Clara (Light)</option><option>Média-Clara</option><option>Média</option>
+              <option>Média-Escura</option><option>Escura (Dark)</option>
+            </select>
+          </div>
+          <div class="fg"><label>Data da torra</label><input type="date" id="c-dtorra"></div>
+          <div class="fg"><label>Descanso recomendado [dias]</label><input type="number" id="c-descanso" placeholder="14"></div>
+          <div class="fg span2"><label>Notas sensoriais do torrefador</label><input type="text" id="c-notas-torr" placeholder="ex: chocolate, frutas vermelhas, caramelo..."></div>
+        </div>
+
+        <div class="form-group-label">Comercial</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Score SCA</label><input type="number" id="c-sca" step="0.25" placeholder="85.00"></div>
+          <div class="fg"><label>Premiações / Certificações</label><input type="text" id="c-premios" placeholder="ex: Cup of Excellence 2024"></div>
+          <div class="fg"><label>Preço [R$]</label><input type="number" id="c-preco" step="0.01" placeholder="55.00"></div>
+          <div class="fg"><label>Peso [g]</label><input type="number" id="c-peso" placeholder="250"></div>
+          <div class="fg span2"><label>Embalagem / Lote</label><input type="text" id="c-lote" placeholder="Número do lote ou código da embalagem"></div>
+        </div>
+
+        <div class="form-group-label">Controle</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Data de abertura</label><input type="date" id="c-abertura"></div>
+          <div class="fg"><label>Status do pacote</label>
+            <select id="c-status"><option>Ativo</option><option>Esgotado</option></select>
+          </div>
+          <div class="fg span2"><label>Observações</label><textarea id="c-obs"></textarea></div>
+          <div class="fg">
+            <label>Foto do rótulo</label>
+            <input type="file" id="c-foto" accept="image/*" onchange="previewCafeFoto(this)">
+            <img id="c-foto-preview" class="photo-preview" alt="Pré-visualização">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleForm('form-cafe')">Cancelar</button>
+          <button class="btn-save" onclick="saveCafe()">Salvar café</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cafes-list"></div>
+  </div>
+
+  <div id="panel-receitas" class="panel">
+    <button class="add-btn" onclick="toggleForm('form-receita')"><i class="ti ti-plus"></i>Adicionar receita</button>
+
+    <div id="form-receita" class="hidden">
+      <div class="form-modal">
+        <div class="form-group-label">Equipamentos</div>
+        <div class="form-grid g3">
+          <div class="fg span2"><label>Nome da receita *</label><input type="text" id="r-nome" placeholder="ex: Pourover 1:15 Bloom Estendido"></div>
+          <div class="fg"><label>Café</label><select id="r-cafe"><option value="">— selecionar —</option></select></div>
+          <div class="fg"><label>Método</label><select id="r-metodo"><option value="">— selecionar —</option></select></div>
+          <div class="fg"><label>Moedor</label><select id="r-moedor"><option value="">— selecionar —</option></select></div>
+          <div class="fg"><label>Filtro</label>
+            <select id="r-filtro">
+              <option>Papel branco</option><option>Papel marrom (virgem)</option>
+              <option>Metal (reutilizável)</option><option>Pano (flanela)</option>
+              <option>Basket simples (naked)</option><option>Basket dupla parede (pressurizado)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group-label">Parâmetros</div>
+        <div class="form-grid g4">
+          <div class="fg"><label>Dose [g]</label><input type="number" id="r-dose" step="0.1" oninput="calcReceitaRatio()"></div>
+          <div class="fg"><label>Água total [ml]</label><input type="number" id="r-agua" oninput="calcReceitaRatio()"></div>
+          <div class="fg"><label>Proporção</label><input type="text" id="r-prop" readonly placeholder="1:0"></div>
+          <div class="fg"><label>Yield [g]</label><input type="number" id="r-yield"></div>
+          <div class="fg"><label>Temp. [°C]</label><input type="number" id="r-temp"></div>
+          <div class="fg"><label>Tipo de água</label>
+            <select id="r-agua-tipo">
+              <option>Filtrada</option><option>Mineral</option><option>Remineralizada</option><option>Torneira</option>
+            </select>
+          </div>
+          <div class="fg"><label>Ajuste do moedor</label><input type="text" id="r-clique" placeholder="ex: 28"></div>
+        </div>
+
+        <div class="form-group-label">Dinâmica de extração</div>
+        <div class="form-grid g4">
+          <div class="fg"><label>Tempo total</label><input type="text" id="r-tempo" placeholder="ex: 3:30"></div>
+          <div class="fg"><label>Bloom [s]</label><input type="number" id="r-bloom-t"></div>
+          <div class="fg"><label>Água bloom [ml]</label><input type="number" id="r-bloom-ml"></div>
+          <div class="fg"><label>N° de despejos</label><input type="number" id="r-despejos"></div>
+          <div class="fg span2"><label>Descrição dos despejos</label><input type="text" id="r-desc-desp" placeholder="ex: 1° 36ml bloom / 2° 117ml / 3° 117ml..."></div>
+          <div class="fg span2"><label>Técnicas especiais</label>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;padding:6px 0">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px"><input type="checkbox" class="r-tec" value="Swirl"> Swirl</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px"><input type="checkbox" class="r-tec" value="Skim"> Skim</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px"><input type="checkbox" class="r-tec" value="Bypass"> Bypass</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px"><input type="checkbox" class="r-tec" value="Pressão revertida"> Pressão revertida</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px"><input type="checkbox" class="r-tec" value="Bloom prolongado"> Bloom prolongado</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px"><input type="checkbox" class="r-tec" value="Turbulência"> Turbulência</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group-label">Sensorial</div>
+        <div class="form-grid g4">
+          <div class="fg"><label>Nota final</label>
+            <select id="r-nota"><option value="">—</option><option>6.0</option><option>6.5</option><option>7.0</option><option>7.5</option><option>8.0</option><option>8.5</option><option>9.0</option><option>9.5</option><option>10.0</option></select>
+          </div>
+          <div class="fg"><label>Doçura</label>
+            <select id="r-docura"><option value="">—</option><option>Baixa</option><option>Média</option><option>Alta</option></select>
+          </div>
+          <div class="fg"><label>Acidez</label>
+            <select id="r-acidez"><option value="">—</option><option>Baixa</option><option>Média</option><option>Alta</option><option>Brilhante</option></select>
+          </div>
+          <div class="fg"><label>Corpo</label>
+            <select id="r-corpo"><option value="">—</option><option>Leve</option><option>Médio</option><option>Encorpado</option><option>Cremoso</option></select>
+          </div>
+          <div class="fg fg-check"><input type="checkbox" id="r-amargor"><label for="r-amargor">Amargor / Adstringência</label></div>
+          <div class="fg span2"><label>Notas reais</label><input type="text" id="r-notas" placeholder="ex: caramelo, ameixa, floral..."></div>
+          <div class="fg span2"><label>Observações</label><textarea id="r-obs"></textarea></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleForm('form-receita')">Cancelar</button>
+          <button class="btn-save" onclick="saveReceita()">Salvar receita</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="receitas-list"></div>
+  </div>
+
+  <div id="panel-metodos" class="panel">
+    <button class="add-btn" onclick="toggleForm('form-metodo')"><i class="ti ti-plus"></i>Adicionar método</button>
+
+    <div id="form-metodo" class="hidden">
+      <div class="form-modal">
+        <div class="form-group-label">Identificação</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Tipo</label>
+            <select id="m-tipo" onchange="toggleMetodoOutro()">
+              <option>V60</option><option>Melitta</option><option>Chemex</option>
+              <option>Kalita Wave</option><option>AeroPress</option><option>Clever Dripper</option>
+              <option>Espresso</option><option>Moka Pot</option><option>Prensa Francesa</option><option>Sifão</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div class="fg hidden" id="m-outro-wrap"><label>Nome específico *</label><input type="text" id="m-outro" placeholder="Descreva o método"></div>
+          <div class="fg"><label>Marca</label><input type="text" id="m-marca" placeholder="ex: Hario, Fellow, Bialetti..."></div>
+        </div>
+
+        <div class="form-group-label">Especificações</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Tamanho / Modelo</label><input type="text" id="m-tamanho" placeholder="ex: 02, 155, 6-cup..."></div>
+          <div class="fg"><label>Material</label>
+            <select id="m-material">
+              <option>Plástico</option><option>Cerâmica</option><option>Vidro</option>
+              <option>Cobre</option><option>Inox</option><option>Metal</option><option>Bambu</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group-label">Classificação SCA</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Princípio de extração</label>
+            <select id="m-principio">
+              <option>Gotejamento (Drip)</option><option>Infusão (Immersion)</option>
+              <option>Pressão</option><option>Híbrido (Infusão + Drip)</option><option>Percolação</option>
+            </select>
+          </div>
+          <div class="fg"><label>Formato da base</label>
+            <select id="m-formato">
+              <option>Cônico</option><option>Plano</option><option>Ondulado</option>
+              <option>Cilíndrico</option><option>Outro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group-label">Controle</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Status</label>
+            <select id="m-status"><option>Ativo</option><option>Inativo</option><option>Quebrado</option></select>
+          </div>
+          <div class="fg span2"><label>Notas</label><textarea id="m-obs"></textarea></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleForm('form-metodo')">Cancelar</button>
+          <button class="btn-save" onclick="saveMetodo()">Salvar método</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="metodos-list"></div>
+  </div>
+
+  <div id="panel-equipamentos" class="panel">
+    <button class="add-btn" onclick="toggleForm('form-equip')"><i class="ti ti-plus"></i>Adicionar equipamento</button>
+
+    <div id="form-equip" class="hidden">
+      <div class="form-modal">
+        <div class="form-group-label">Identificação</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Categoria</label>
+            <select id="e-cat" onchange="renderEquipFields()">
+              <option>Moedor manual</option><option>Moedor elétrico</option>
+              <option>Máquina de espresso</option><option>Chaleira</option>
+              <option>Balança</option><option>Termômetro</option>
+              <option>Acessório</option><option>Refratômetro</option><option>Outros</option>
+            </select>
+          </div>
+          <div class="fg"><label>Marca *</label><input type="text" id="e-marca" placeholder="ex: Comandante, Fellow..."></div>
+          <div class="fg"><label>Modelo *</label><input type="text" id="e-modelo" placeholder="ex: C40 MKIV, Stagg EKG+"></div>
+          <div class="fg"><label>Versão / Ano</label><input type="text" id="e-versao" placeholder="ex: 2023, v3..."></div>
+        </div>
+
+        <div class="form-group-label">Controle</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Status</label>
+            <select id="e-status"><option>Ativo</option><option>Inativo</option><option>Vendido</option></select>
+          </div>
+          <div class="fg"><label>Data de compra</label><input type="date" id="e-compra"></div>
+          <div class="fg"><label>Última manutenção</label><input type="date" id="e-manut"></div>
+        </div>
+
+        <div class="form-group-label">Especificações técnicas</div>
+        <div id="e-specs" class="form-grid g3">
+          </div>
+
+        <div class="form-group-label">Adicionais</div>
+        <div class="form-grid g3">
+          <div class="fg"><label>Serial</label><input type="text" id="e-serial"></div>
+          <div class="fg span2"><label>Notas</label><textarea id="e-notas"></textarea></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleForm('form-equip')">Cancelar</button>
+          <button class="btn-save" onclick="saveEquip()">Salvar equipamento</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="equip-list"></div>
+  </div>
+
+</div><div class="toast" id="toast"></div>
+
+<script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
@@ -22,471 +393,14 @@
         .catch(err => console.error('BrewTracker: Erro no PWA', err));
     });
   }
-  </script>
-</head>
-
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --coffee-dark:#2C1A0E;--coffee-mid:#6B3F1F;--coffee-warm:#C4874A;--coffee-cream:#F5ECD7;--coffee-light:#FAF6EF;
-    --text-primary:#1C1008;--text-secondary:#6B5744;--text-muted:#A08878;
-    --border:rgba(107,63,31,0.15);--border-strong:rgba(107,63,31,0.3);
-    --success:#3B6D11;--success-bg:#EAF3DE;
-  }
-  .app{font-family:'DM Sans',sans-serif;background:var(--coffee-light);min-height:600px;color:var(--text-primary)}
-  .app-header{background:var(--coffee-dark);padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
-  .app-title{font-family:'Playfair Display',serif;color:var(--coffee-cream);font-size:20px;font-weight:400;letter-spacing:0.5px}
-  .app-title em{color:var(--coffee-warm);font-style:italic}
-  .header-date{font-size:12px;color:rgba(245,236,215,0.6);letter-spacing:0.5px}
-  .tab-bar{background:var(--coffee-cream);border-bottom:1px solid var(--border-strong);display:flex;overflow-x:auto;scrollbar-width:none;padding:0 4px}
-  .tab-bar::-webkit-scrollbar{display:none}
-  .tab{padding:12px 14px;font-size:12px;font-weight:500;color:var(--text-secondary);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;letter-spacing:0.3px;display:flex;align-items:center;gap:6px;transition:color 0.2s}
-  .tab i{font-size:14px}
-  .tab.active{color:var(--coffee-mid);border-bottom-color:var(--coffee-mid)}
-  .tab:hover:not(.active){color:var(--coffee-dark)}
-  .content{padding:16px}
-  .section-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:500;color:var(--coffee-dark);margin-bottom:14px}
-  .card{background:#fff;border:0.5px solid var(--border-strong);border-radius:12px;padding:14px;margin-bottom:10px}
-  .card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
-  .card-title{font-size:14px;font-weight:500;color:var(--text-primary)}
-  .card-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px}
-  .badge{font-size:10px;font-weight:500;padding:3px 8px;border-radius:20px;white-space:nowrap}
-  .badge-process{background:#FAF0E6;color:#854F0B}
-  .badge-species{background:#EAF3DE;color:#3B6D11}
-  .badge-method{background:#E6F1FB;color:#185FA5}
-  .badge-natural{background:#FAEEDA;color:#854F0B}
-  .badge-honey{background:#FAEEDA;color:#993C1D}
-  .badge-washed{background:#E6F1FB;color:#185FA5}
-  .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
-  .meta-item{font-size:11px}
-  .meta-label{color:var(--text-muted);display:block;margin-bottom:1px}
-  .meta-value{color:var(--text-secondary);font-weight:500}
-  .score-bar{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)}
-  .score-dots{display:flex;gap:3px}
-  .dot{width:6px;height:6px;border-radius:50%;background:var(--border-strong)}
-  .dot.filled{background:var(--coffee-warm)}
-  .add-btn{width:100%;padding:11px;background:var(--coffee-dark);color:var(--coffee-cream);border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.3px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;transition:background 0.2s}
-  .add-btn:hover{background:var(--coffee-mid)}
-  .log-entry{background:#fff;border:0.5px solid var(--border-strong);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
-  .log-time{font-size:11px;color:var(--text-muted);min-width:36px;padding-top:2px;font-variant-numeric:tabular-nums}
-  .log-body{flex:1}
-  .log-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:3px}
-  .log-detail{font-size:11px;color:var(--text-secondary)}
-  .log-score{display:flex;align-items:center;gap:3px;margin-top:5px}
-  .log-dot{width:5px;height:5px;border-radius:50%;background:var(--border-strong)}
-  .log-dot.on{background:var(--coffee-warm)}
-  .rating-badge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;margin-left:auto;background:var(--success-bg);color:var(--success)}
-  .recipe-card{background:#fff;border:0.5px solid var(--border-strong);border-radius:12px;padding:14px;margin-bottom:10px}
-  .recipe-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-  .method-badge{width:36px;height:36px;border-radius:8px;background:var(--coffee-cream);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-  .recipe-title{font-size:14px;font-weight:500;color:var(--text-primary)}
-  .recipe-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
-  .params-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-  .param{background:var(--coffee-cream);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--text-secondary);display:flex;flex-direction:column}
-  .param b{font-size:12px;font-weight:500;color:var(--text-primary)}
-  .flavor-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;padding-top:8px;border-top:0.5px solid var(--border)}
-  .flavor-tag{font-size:10px;padding:2px 7px;border-radius:20px;background:#FAF0E6;color:#854F0B}
-  .equip-card{background:#fff;border:0.5px solid var(--border-strong);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
-  .equip-icon{width:40px;height:40px;border-radius:10px;background:var(--coffee-cream);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .equip-icon i{font-size:20px;color:var(--coffee-mid)}
-  .equip-body{flex:1}
-  .equip-name{font-size:13px;font-weight:500;color:var(--text-primary)}
-  .equip-detail{font-size:11px;color:var(--text-muted);margin-top:2px}
-  .equip-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
-  .equip-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:var(--coffee-cream);color:var(--text-secondary)}
-  .empty-state{text-align:center;padding:32px 20px;color:var(--text-muted)}
-  .empty-state i{font-size:32px;display:block;margin-bottom:8px;color:var(--border-strong)}
-  .today-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-  .today-label{font-size:11px;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase}
-  .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-  .stat-card{background:var(--coffee-cream);border-radius:10px;padding:10px;text-align:center}
-  .stat-num{font-size:20px;font-weight:500;color:var(--coffee-dark);font-family:'Playfair Display',serif}
-  .stat-lbl{font-size:10px;color:var(--text-muted);margin-top:1px}
-  .panel{display:none}.panel.active{display:block}
-  .form-modal{background:#fff;border:0.5px solid var(--border-strong);border-radius:14px;padding:16px;margin-bottom:14px}
-  .form-title{font-size:14px;font-weight:500;color:var(--coffee-dark);margin-bottom:12px;display:flex;align-items:center;gap:6px}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-  .form-group{display:flex;flex-direction:column;gap:4px}
-  .form-group.full{grid-column:1/-1}
-  .form-group label{font-size:11px;color:var(--text-muted);font-weight:500;letter-spacing:0.3px}
-  .form-group input,.form-group select,.form-group textarea{font-size:12px;font-family:'DM Sans',sans-serif;padding:7px 10px;border:0.5px solid var(--border-strong);border-radius:8px;background:var(--coffee-light);color:var(--text-primary);outline:none}
-  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--coffee-warm)}
-  .form-group textarea{resize:vertical;min-height:60px}
-  .form-actions{display:flex;gap:8px}
-  .btn-save{flex:1;padding:9px;background:var(--coffee-dark);color:var(--coffee-cream);border:none;border-radius:8px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer}
-  .btn-cancel{padding:9px 14px;background:none;border:0.5px solid var(--border-strong);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text-secondary);cursor:pointer}
-  .section-divider{font-size:10px;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;margin:12px 0 8px;font-weight:500}
-</style>
-
-<div class="app">
-  <div class="app-header">
-    <div>
-      <div class="app-title">café <em>diário</em></div>
-      <div class="header-date" id="hdate"></div>
-    </div>
-    <i class="ti ti-coffee" style="font-size:22px;color:var(--coffee-warm)" aria-hidden="true"></i>
-  </div>
-
-  <div class="tab-bar">
-    <button class="tab active" onclick="showTab('diario')"><i class="ti ti-notebook" aria-hidden="true"></i>Diário</button>
-    <button class="tab" onclick="showTab('cafes')"><i class="ti ti-plant" aria-hidden="true"></i>Cafés</button>
-    <button class="tab" onclick="showTab('receitas')"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Receitas</button>
-    <button class="tab" onclick="showTab('metodos')"><i class="ti ti-filter" aria-hidden="true"></i>Métodos</button>
-    <button class="tab" onclick="showTab('equipamentos')"><i class="ti ti-tool" aria-hidden="true"></i>Equipamentos</button>
-  </div>
-
-  <div class="content">
-
-    <!-- DIÁRIO -->
-    <div id="panel-diario" class="panel active">
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-num">3</div><div class="stat-lbl">Extrações hoje</div></div>
-        <div class="stat-card"><div class="stat-num">54g</div><div class="stat-lbl">Café usado</div></div>
-        <div class="stat-card"><div class="stat-num">8.4</div><div class="stat-lbl">Score médio</div></div>
-      </div>
-      <button class="add-btn" onclick="toggleForm('form-log')"><i class="ti ti-plus" aria-hidden="true"></i>Registrar extração</button>
-
-      <div id="form-log" style="display:none">
-        <div class="form-modal">
-          <div class="form-title"><i class="ti ti-pencil" aria-hidden="true"></i>Nova extração</div>
-          <div class="form-grid">
-            <div class="form-group"><label>Hora</label><input type="time" id="log-time" /></div>
-            <div class="form-group"><label>Café</label><select id="log-cafe"><option>Fazenda Ambiental – Catuaí</option><option>Sítio Bom Jesus – Bourbon</option></select></div>
-            <div class="form-group"><label>Método</label><select id="log-metodo"><option>V60-02</option><option>Melitta 102</option><option>AeroPress</option></select></div>
-            <div class="form-group"><label>Receita</label><select id="log-receita"><option>Pourover 1:15</option><option>Bloom estendido</option></select></div>
-            <div class="form-group"><label>Dose (g)</label><input type="number" placeholder="18" /></div>
-            <div class="form-group"><label>Rendimento (ml)</label><input type="number" placeholder="270" /></div>
-            <div class="form-group"><label>Clique do moedor</label><input type="text" placeholder="ex: 28" /></div>
-            <div class="form-group"><label>TDS (%)</label><input type="number" placeholder="1.38" step="0.01" /></div>
-            <div class="form-group full"><label>Score geral (1–10)</label><input type="range" min="1" max="10" step="0.5" value="8" /></div>
-            <div class="form-group full"><label>Notas de degustação</label><input type="text" placeholder="ex: caramelo, ameixa, acidez viva..." /></div>
-            <div class="form-group full"><label>Observações</label><textarea placeholder="Temperatura da água, fluxo, observações gerais..."></textarea></div>
-          </div>
-          <div class="form-actions"><button class="btn-cancel" onclick="toggleForm('form-log')">Cancelar</button><button class="btn-save" onclick="saveLog()">Salvar</button></div>
-        </div>
-      </div>
-
-      <div class="today-header">
-        <span class="today-label">Hoje</span>
-      </div>
-
-      <div class="log-entry">
-        <div class="log-time">07:42</div>
-        <div class="log-body">
-          <div class="log-title">V60-02 · Fazenda Ambiental – Catuaí</div>
-          <div class="log-detail">18g · 270ml · Clique 28 · Filtro papel branco</div>
-          <div class="log-score">
-            <div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div>
-            <div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot"></div>
-            <span style="font-size:11px;color:var(--text-muted);margin-left:5px">9.0</span>
-            <span class="rating-badge" style="margin-left:auto">Excelente</span>
-          </div>
-          <div class="log-detail" style="margin-top:4px;font-style:italic">Caramelo, avelã, acidez suave de maçã verde</div>
-        </div>
-      </div>
-
-      <div class="log-entry">
-        <div class="log-time">12:15</div>
-        <div class="log-body">
-          <div class="log-title">AeroPress · Sítio Bom Jesus – Bourbon</div>
-          <div class="log-detail">16g · 200ml · Clique 22 · Pressão revertida</div>
-          <div class="log-score">
-            <div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div>
-            <div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot"></div><div class="log-dot"></div>
-            <span style="font-size:11px;color:var(--text-muted);margin-left:5px">8.0</span>
-          </div>
-          <div class="log-detail" style="margin-top:4px;font-style:italic">Chocolate amargo, corpo encorpado, final longo</div>
-        </div>
-      </div>
-
-      <div class="log-entry">
-        <div class="log-time">15:30</div>
-        <div class="log-body">
-          <div class="log-title">Melitta 102 · Fazenda Ambiental – Catuaí</div>
-          <div class="log-detail">20g · 300ml · Clique 30 · Filtro papel marrom</div>
-          <div class="log-score">
-            <div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot on"></div>
-            <div class="log-dot on"></div><div class="log-dot on"></div><div class="log-dot"></div><div class="log-dot"></div><div class="log-dot"></div>
-            <span style="font-size:11px;color:var(--text-muted);margin-left:5px">7.5</span>
-          </div>
-          <div class="log-detail" style="margin-top:4px;font-style:italic">Floral, bergamota, levemente adstringente</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CAFÉS -->
-    <div id="panel-cafes" class="panel">
-      <button class="add-btn" onclick="toggleForm('form-cafe')"><i class="ti ti-plus" aria-hidden="true"></i>Adicionar café</button>
-
-      <div id="form-cafe" style="display:none">
-        <div class="form-modal">
-          <div class="form-title"><i class="ti ti-plant" aria-hidden="true"></i>Novo café</div>
-          <div class="form-grid">
-            <div class="form-group full"><label>Nome / Fazenda</label><input type="text" placeholder="ex: Fazenda Ambiental Fortaleza" /></div>
-            <div class="form-group"><label>País de origem</label><input type="text" placeholder="Brasil" /></div>
-            <div class="form-group"><label>Região</label><input type="text" placeholder="ex: Mogiana, SP" /></div>
-            <div class="form-group"><label>Espécie</label><select><option>Coffea arabica</option><option>Coffea canephora (Robusta)</option><option>Coffea liberica</option></select></div>
-            <div class="form-group"><label>Variedade</label><input type="text" placeholder="ex: Bourbon, Catuaí, Geisha..." /></div>
-            <div class="form-group"><label>Altitude (m)</label><input type="number" placeholder="1200" /></div>
-            <div class="form-group"><label>Processo</label><select><option>Natural</option><option>Lavado (Washed)</option><option>Honey</option><option>Pulped Natural</option><option>Semi-Lavado</option><option>Fermentação anaeróbica</option><option>Double fermentation</option><option>Carbonic maceration</option></select></div>
-            <div class="form-group"><label>Data da torra</label><input type="date" /></div>
-            <div class="form-group"><label>Torra</label><select><option>Clara (Light)</option><option>Média-clara</option><option>Média</option><option>Média-escura</option><option>Escura (Dark)</option></select></div>
-            <div class="form-group"><label>Torrefador</label><input type="text" placeholder="ex: Octavio Café" /></div>
-            <div class="form-group"><label>Score SCA</label><input type="number" placeholder="85.5" step="0.25" /></div>
-            <div class="form-group"><label>Preço (R$)</label><input type="number" placeholder="55.00" step="0.01" /></div>
-            <div class="form-group"><label>Peso (g)</label><input type="number" placeholder="250" /></div>
-            <div class="form-group full"><label>Notas sensoriais do torrefador</label><input type="text" placeholder="ex: chocolate, caramelo, frutas vermelhas" /></div>
-            <div class="form-group full"><label>Embalagem / Lote</label><input type="text" placeholder="Número do lote, código da embalagem..." /></div>
-            <div class="form-group full"><label>Observações</label><textarea placeholder="Informações adicionais, impressões gerais..."></textarea></div>
-          </div>
-          <div class="form-actions"><button class="btn-cancel" onclick="toggleForm('form-cafe')">Cancelar</button><button class="btn-save">Salvar</button></div>
-        </div>
-      </div>
-
-      <div class="section-title">Meus cafés</div>
-
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-title">Fazenda Ambiental – Catuaí Vermelho</div><div class="card-subtitle">Mogiana, SP · Brasil · 1.250m</div></div>
-          <span class="badge badge-natural">Natural</span>
-        </div>
-        <div class="meta-grid">
-          <div class="meta-item"><span class="meta-label">Espécie</span><span class="meta-value">Coffea arabica</span></div>
-          <div class="meta-item"><span class="meta-label">Torra</span><span class="meta-value">Clara · 12 mai 2025</span></div>
-          <div class="meta-item"><span class="meta-label">Torrefador</span><span class="meta-value">Octavio Café</span></div>
-          <div class="meta-item"><span class="meta-label">Score SCA</span><span class="meta-value">87,5</span></div>
-        </div>
-        <div class="flavor-row">
-          <span class="flavor-tag">caramelo</span><span class="flavor-tag">avelã</span><span class="flavor-tag">maçã verde</span><span class="flavor-tag">acidez viva</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-title">Sítio Bom Jesus – Bourbon Amarelo</div><div class="card-subtitle">Sul de Minas · Brasil · 1.100m</div></div>
-          <span class="badge badge-honey">Honey</span>
-        </div>
-        <div class="meta-grid">
-          <div class="meta-item"><span class="meta-label">Espécie</span><span class="meta-value">Coffea arabica</span></div>
-          <div class="meta-item"><span class="meta-label">Torra</span><span class="meta-value">Média · 2 mai 2025</span></div>
-          <div class="meta-item"><span class="meta-label">Torrefador</span><span class="meta-value">Café Especial BH</span></div>
-          <div class="meta-item"><span class="meta-label">Score SCA</span><span class="meta-value">85,25</span></div>
-        </div>
-        <div class="flavor-row">
-          <span class="flavor-tag">chocolate amargo</span><span class="flavor-tag">ameixa</span><span class="flavor-tag">corpo encorpado</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- RECEITAS -->
-    <div id="panel-receitas" class="panel">
-      <button class="add-btn" onclick="toggleForm('form-receita')"><i class="ti ti-plus" aria-hidden="true"></i>Adicionar receita</button>
-
-      <div id="form-receita" style="display:none">
-        <div class="form-modal">
-          <div class="form-title"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Nova receita</div>
-          <div class="form-grid">
-            <div class="form-group full"><label>Nome da receita</label><input type="text" placeholder="ex: Pourover 1:15 Bloom Estendido" /></div>
-            <div class="form-group"><label>Método</label><select><option>V60-01</option><option>V60-02</option><option>Melitta 101</option><option>Melitta 102</option><option>AeroPress</option><option>Chemex 3-cup</option><option>Chemex 6-cup</option><option>Kalita Wave 155</option><option>Kalita Wave 185</option><option>Clever Dripper</option><option>Espresso</option><option>Moka Pot</option><option>Prensa Francesa</option></select></div>
-            <div class="form-group"><label>Café</label><select><option>Fazenda Ambiental – Catuaí</option><option>Sítio Bom Jesus – Bourbon</option></select></div>
-            <div class="form-group"><label>Dose de café (g)</label><input type="number" placeholder="18" /></div>
-            <div class="form-group"><label>Água total (ml / g)</label><input type="number" placeholder="270" /></div>
-            <div class="form-group"><label>Proporção</label><input type="text" placeholder="1:15" /></div>
-            <div class="form-group"><label>Temp. da água (°C)</label><input type="number" placeholder="93" /></div>
-            <div class="form-group"><label>Clique do moedor</label><input type="text" placeholder="ex: 28" /></div>
-            <div class="form-group"><label>Moedor</label><select><option>Comandante C40</option><option>Timemore C3</option><option>1Zpresso JX-Pro</option><option>Mazzer Mini</option></select></div>
-            <div class="form-group"><label>Filtro</label><select id="filtro-select" onchange="toggleFiltroOpts()"><option>Papel branco</option><option>Papel marrom (virgem)</option><option>Metal (reutilizável)</option><option>Pano (flanela)</option><option>Basket dupla parede (pressurizado)</option><option>Basket simples (naked/sem fundo)</option></select></div>
-            <div class="form-group" id="espresso-opts" style="display:none"><label>Tipo de porta-filtro</label><select><option>Naked (sem fundo)</option><option>Pressurizado</option><option>Simples</option><option>Duplo cego</option></select></div>
-            <div class="form-group"><label>Tempo de extração (s)</label><input type="number" placeholder="240" /></div>
-            <div class="form-group"><label>Tempo de bloom (s)</label><input type="number" placeholder="45" /></div>
-            <div class="form-group"><label>Quantidade de bloom (ml)</label><input type="number" placeholder="36" /></div>
-            <div class="form-group"><label>Número de despejos</label><input type="number" placeholder="3" /></div>
-            <div class="form-group full"><label>Descrição dos despejos</label><textarea placeholder="1° despejo: 36ml bloom 45s / 2° despejo: 117ml em círculos / 3° despejo: 117ml centralizando..."></textarea></div>
-            <div class="form-group full"><label>Notas gerais</label><textarea placeholder="Técnicas especiais, observações de fluxo, dicas..."></textarea></div>
-          </div>
-          <div class="form-actions"><button class="btn-cancel" onclick="toggleForm('form-receita')">Cancelar</button><button class="btn-save">Salvar</button></div>
-        </div>
-      </div>
-
-      <div class="section-title">Receitas salvas</div>
-
-      <div class="recipe-card">
-        <div class="recipe-header">
-          <div class="method-badge">▽</div>
-          <div><div class="recipe-title">Pourover 1:15 com bloom estendido</div><div class="recipe-sub">V60-02 · Fazenda Ambiental – Catuaí</div></div>
-        </div>
-        <div class="params-row">
-          <div class="param"><span>Dose</span><b>18g</b></div>
-          <div class="param"><span>Água</span><b>270ml</b></div>
-          <div class="param"><span>Temp.</span><b>93°C</b></div>
-          <div class="param"><span>Clique</span><b>28</b></div>
-          <div class="param"><span>Bloom</span><b>36ml / 45s</b></div>
-          <div class="param"><span>Tempo</span><b>3m 30s</b></div>
-        </div>
-        <div style="font-size:11px;color:var(--text-secondary)">Filtro papel branco · Comandante C40 · 3 despejos</div>
-        <div class="flavor-row">
-          <span class="flavor-tag">caramelo</span><span class="flavor-tag">avelã</span><span class="flavor-tag">acidez viva</span>
-        </div>
-      </div>
-
-      <div class="recipe-card">
-        <div class="recipe-header">
-          <div class="method-badge">⊚</div>
-          <div><div class="recipe-title">AeroPress revertida concentrada</div><div class="recipe-sub">AeroPress · Sítio Bom Jesus – Bourbon</div></div>
-        </div>
-        <div class="params-row">
-          <div class="param"><span>Dose</span><b>16g</b></div>
-          <div class="param"><span>Água</span><b>200ml</b></div>
-          <div class="param"><span>Temp.</span><b>85°C</b></div>
-          <div class="param"><span>Clique</span><b>22</b></div>
-          <div class="param"><span>Infusão</span><b>90s</b></div>
-          <div class="param"><span>Tempo</span><b>2m 15s</b></div>
-        </div>
-        <div style="font-size:11px;color:var(--text-secondary)">Pressão revertida · Timemore C3</div>
-        <div class="flavor-row">
-          <span class="flavor-tag">chocolate</span><span class="flavor-tag">corpo encorpado</span><span class="flavor-tag">final longo</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- MÉTODOS -->
-    <div id="panel-metodos" class="panel">
-      <button class="add-btn" onclick="toggleForm('form-metodo')"><i class="ti ti-plus" aria-hidden="true"></i>Adicionar método</button>
-
-      <div id="form-metodo" style="display:none">
-        <div class="form-modal">
-          <div class="form-title"><i class="ti ti-filter" aria-hidden="true"></i>Novo método</div>
-          <div class="form-grid">
-            <div class="form-group"><label>Tipo</label><select id="metodo-tipo" onchange="updateMetodoSize()"><option>V60</option><option>Melitta</option><option>Kalita Wave</option><option>Chemex</option><option>AeroPress</option><option>Clever Dripper</option><option>Espresso</option><option>Moka Pot</option><option>Prensa Francesa</option><option>Sifão</option><option>Outro</option></select></div>
-            <div class="form-group"><label>Tamanho / Modelo</label><select id="metodo-size"><option>01 (1–2 xícaras)</option><option>02 (2–4 xícaras)</option><option>03 (4–6 xícaras)</option></select></div>
-            <div class="form-group"><label>Material</label><select><option>Plástico</option><option>Cerâmica</option><option>Vidro</option><option>Cobre</option><option>Inox</option><option>Metal</option></select></div>
-            <div class="form-group"><label>Marca</label><input type="text" placeholder="ex: Hario, Melitta, Fellow..." /></div>
-            <div class="form-group full"><label>Notas</label><textarea placeholder="Observações, dicas específicas deste método..."></textarea></div>
-          </div>
-          <div class="form-actions"><button class="btn-cancel" onclick="toggleForm('form-metodo')">Cancelar</button><button class="btn-save">Salvar</button></div>
-        </div>
-      </div>
-
-      <div class="section-divider">Filtrado</div>
-      <div class="card"><div class="card-header"><div><div class="card-title">Hario V60</div><div class="card-subtitle">Tamanho 02 · Plástico</div></div><span class="badge badge-method">Filtrado</span></div><div style="font-size:11px;color:var(--text-muted)">Capacidade: 2–4 xícaras · Ângulo do cone: 60°</div></div>
-      <div class="card"><div class="card-header"><div><div class="card-title">Melitta</div><div class="card-subtitle">Tamanho 102 · Cerâmica</div></div><span class="badge badge-method">Filtrado</span></div><div style="font-size:11px;color:var(--text-muted)">Capacidade: 2–4 xícaras · Furo único</div></div>
-      <div class="card"><div class="card-header"><div><div class="card-title">AeroPress</div><div class="card-subtitle">Original</div></div><span class="badge badge-method">Pressão</span></div><div style="font-size:11px;color:var(--text-muted)">Pressão manual · Normal ou revertido</div></div>
-    </div>
-
-    <!-- EQUIPAMENTOS -->
-    <div id="panel-equipamentos" class="panel">
-      <button class="add-btn" onclick="toggleForm('form-equip')"><i class="ti ti-plus" aria-hidden="true"></i>Adicionar equipamento</button>
-
-      <div id="form-equip" style="display:none">
-        <div class="form-modal">
-          <div class="form-title"><i class="ti ti-tool" aria-hidden="true"></i>Novo equipamento</div>
-          <div class="form-grid">
-            <div class="form-group"><label>Categoria</label><select id="equip-cat" onchange="updateEquipFields()"><option>Moedor manual</option><option>Moedor elétrico</option><option>Máquina de espresso</option><option>Chaleira</option><option>Balança</option><option>Termômetro</option><option>Tamper</option><option>Distribuidor (WDT)</option><option>Puck screen</option><option>Refratômetro</option><option>Kettle elétrica</option><option>Outro</option></select></div>
-            <div class="form-group"><label>Marca</label><input type="text" placeholder="ex: Comandante, Mazzer, Fellow..." /></div>
-            <div class="form-group"><label>Modelo</label><input type="text" placeholder="ex: C40 MKIV, Mini E, Stagg EKG..." /></div>
-            <div class="form-group"><label>Versão / Ano</label><input type="text" placeholder="ex: 2023, v3, Red Clix..." /></div>
-            <div class="form-group" id="moedor-burr"><label>Tipo de burr</label><select><option>Cônico (aço)</option><option>Cônico (cerâmica)</option><option>Plano (aço)</option><option>Plano (cerâmica)</option></select></div>
-            <div class="form-group" id="moedor-rpm" style="display:none"><label>RPM</label><input type="number" placeholder="ex: 1400" /></div>
-            <div class="form-group" id="maquina-pump" style="display:none"><label>Tipo de bomba</label><select><option>Vibratória (vibradora)</option><option>Rotativa</option></select></div>
-            <div class="form-group" id="maquina-boiler" style="display:none"><label>Boiler</label><select><option>Single boiler</option><option>Heat exchange (HX)</option><option>Dual boiler</option><option>Thermoblock</option></select></div>
-            <div class="form-group"><label>Serial / Número</label><input type="text" placeholder="Número de série (opcional)" /></div>
-            <div class="form-group"><label>Data de compra</label><input type="date" /></div>
-            <div class="form-group full"><label>Notas</label><textarea placeholder="Modificações, ajustes, observações..."></textarea></div>
-          </div>
-          <div class="form-actions"><button class="btn-cancel" onclick="toggleForm('form-equip')">Cancelar</button><button class="btn-save">Salvar</button></div>
-        </div>
-      </div>
-
-      <div class="section-divider">Moedores</div>
-      <div class="equip-card">
-        <div class="equip-icon"><i class="ti ti-rotate-clockwise" aria-hidden="true"></i></div>
-        <div class="equip-body">
-          <div class="equip-name">Comandante C40 MKIV</div>
-          <div class="equip-detail">Moedor manual · Cônico aço · Red Clix</div>
-          <div class="equip-tags"><span class="equip-tag">Manual</span><span class="equip-tag">Cônico</span><span class="equip-tag">Aço inox</span></div>
-        </div>
-      </div>
-      <div class="equip-card">
-        <div class="equip-icon"><i class="ti ti-settings" aria-hidden="true"></i></div>
-        <div class="equip-body">
-          <div class="equip-name">Mazzer Mini Elettronico</div>
-          <div class="equip-detail">Moedor elétrico · Cônico 58mm · 1.400 RPM</div>
-          <div class="equip-tags"><span class="equip-tag">Elétrico</span><span class="equip-tag">Cônico</span><span class="equip-tag">1400 RPM</span></div>
-        </div>
-      </div>
-
-      <div class="section-divider">Máquinas de espresso</div>
-      <div class="equip-card">
-        <div class="equip-icon"><i class="ti ti-device-desktop" aria-hidden="true"></i></div>
-        <div class="equip-body">
-          <div class="equip-name">Rancilio Silvia Pro X</div>
-          <div class="equip-detail">Dual boiler · Bomba vibradora · E61</div>
-          <div class="equip-tags"><span class="equip-tag">Dual boiler</span><span class="equip-tag">PID</span><span class="equip-tag">E61</span></div>
-        </div>
-      </div>
-
-      <div class="section-divider">Chaleiras & Outros</div>
-      <div class="equip-card">
-        <div class="equip-icon"><i class="ti ti-droplet" aria-hidden="true"></i></div>
-        <div class="equip-body">
-          <div class="equip-name">Fellow Stagg EKG+</div>
-          <div class="equip-detail">Kettle elétrica · 0,9L · Controle ±1°C</div>
-          <div class="equip-tags"><span class="equip-tag">Elétrica</span><span class="equip-tag">±1°C</span><span class="equip-tag">0,9L</span></div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-function showTab(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  event.target.closest('.tab').classList.add('active');
-}
-function toggleForm(id){
-  var el=document.getElementById(id);
-  el.style.display=el.style.display==='none'?'block':'none';
-}
-function saveLog(){toggleForm('form-log')}
-function toggleFiltroOpts(){
-  var v=document.getElementById('filtro-select').value;
-  var show=v.includes('pressurizado')||v.includes('naked')||v.includes('simples')||v.includes('cego');
-  document.getElementById('espresso-opts').style.display=show?'flex':'none';
-}
-function updateEquipFields(){
-  var cat=document.getElementById('equip-cat').value;
-  var isMoedor=cat.includes('Moedor');
-  var isMaquina=cat.includes('espresso');
-  document.getElementById('moedor-burr').style.display=isMoedor?'flex':'none';
-  document.getElementById('moedor-rpm').style.display=cat.includes('elétrico')?'flex':'none';
-  document.getElementById('maquina-pump').style.display=isMaquina?'flex':'none';
-  document.getElementById('maquina-boiler').style.display=isMaquina?'flex':'none';
-}
-function updateMetodoSize(){
-  var tipo=document.getElementById('metodo-tipo').value;
-  var sel=document.getElementById('metodo-size');
-  sel.innerHTML='';
-  var opts={
-    'V60':['01 (1–2 xícaras)','02 (2–4 xícaras)','03 (4–6 xícaras)'],
-    'Melitta':['101 (1–2 xícaras)','102 (2–4 xícaras)','103 (4–6 xícaras)'],
-    'Kalita Wave':['155 (1–2 xícaras)','185 (2–4 xícaras)'],
-    'Chemex':['3-cup','6-cup','8-cup','10-cup'],
-    'AeroPress':['Original','Go','Clear','XL'],
-    'Clever Dripper':['Small (500ml)','Large (1L)'],
-    'Espresso':['Simples (7g)','Duplo (14g)','Triplo (21g)'],
-    'Moka Pot':['1 xícara','2 xícaras','3 xícaras','6 xícaras','9 xícaras'],
-    'Prensa Francesa':['350ml','500ml','1L'],
-    'Sifão':['2 xícaras','3 xícaras','5 xícaras'],
-    'Outro':['Único']
-  };
-  (opts[tipo]||['Padrão']).forEach(o=>{var opt=document.createElement('option');opt.text=o;sel.add(opt)});
-}
-var d=new Date();
-document.getElementById('hdate').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-var t=document.querySelector('#form-log #log-time');
-if(t){var n=new Date();t.value=n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0')}
 </script>
+
+<script src="js/app.js"></script>
+<script src="js/cafes.js"></script>
+<script src="js/equipamentos.js"></script>
+<script src="js/metodos.js"></script>
+<script src="js/receitas.js"></script>
+<script src="js/diario.js"></script>
+
+</body>
+</html>
