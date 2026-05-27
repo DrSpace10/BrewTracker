@@ -1,13 +1,14 @@
 // js/auth.js
-import { auth } from './firebase.js';
+import { auth, db } from './firebase.js';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   updateProfile,
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// Escuta se o usuário já está logado
+// Escuta se o usuário já está logado ao carregar o app
 onAuthStateChanged(auth, (user) => {
   if (user) {
     document.getElementById('auth-screen').style.display = 'none';
@@ -18,52 +19,72 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Navegação visual
-window.showAuthForm = function(type) {
-  document.getElementById('auth-buttons').classList.add('hidden');
-  if (type === 'login') document.getElementById('form-login').classList.remove('hidden');
-  if (type === 'register') document.getElementById('form-register').classList.remove('hidden');
+// Controle de Alternância das Telas
+window.showRegisterForm = function() {
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-register').classList.remove('hidden');
 };
 
-window.hideAuthForms = function() {
-  document.getElementById('form-login').classList.add('hidden');
-  document.getElementById('form-register').classList.add('hidden');
-  document.getElementById('auth-buttons').classList.remove('hidden');
+window.showLoginForm = function() {
+  document.getElementById('view-register').classList.add('hidden');
+  document.getElementById('view-login').classList.remove('hidden');
 };
 
-// Cadastro no Firebase
+// Cadastro Otimizado na Nuvem
 window.doRegister = async function() {
-  const name = document.getElementById('reg-name').value;
-  const nick = document.getElementById('reg-nick').value;
-  const email = document.getElementById('reg-email').value;
-  const pass = document.getElementById('reg-pass').value;
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value.trim();
+  const level = document.getElementById('reg-level').value;
   
-  if (!nick || !email || !pass) {
-    showToast('Preencha apelido, e-mail e senha!');
+  if (!name || !email || !pass || !level) {
+    showToast('Preencha todos os campos!');
     return;
   }
 
   try {
+    // 1. Cria credencial de login
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-    // Salva o apelido no perfil do Firebase
-    await updateProfile(userCredential.user, { displayName: nick });
+    const user = userCredential.user;
+
+    // 2. Vincula o nome ao perfil de autenticação
+    await updateProfile(user, { displayName: name });
     
+    // 3. Cria a ficha do usuário no Firestore com o Nível de Aprendizado
+    await setDoc(doc(db, "users", user.uid), {
+      nome: name,
+      email: email,
+      nivelAprendizado: level,
+      createdAt: Date.now()
+    });
+
     showToast('Cadastro realizado!');
-    hideAuthForms();
-    showAuthForm('login');
-    document.getElementById('log-email').value = email;
+    
+    // Limpa o formulário de cadastro
+    document.getElementById('reg-name').value = '';
+    document.getElementById('reg-email').value = '';
+    document.getElementById('reg-pass').value = '';
+    
+    // Fecha o cadastro e exibe novamente a tela de login inicial
+    showLoginForm();
+    document.getElementById('log-email').value = email; // Preenche o e-mail para facilitar
   } catch (error) {
     console.error(error);
-    if(error.code === 'auth/email-already-in-use') showToast('Este e-mail já tem cadastro.');
-    else if(error.code === 'auth/weak-password') showToast('A senha deve ter no mínimo 6 caracteres.');
+    if (error.code === 'auth/email-already-in-use') showToast('Este e-mail já tem cadastro.');
+    else if (error.code === 'auth/weak-password') showToast('A senha deve ter no mínimo 6 caracteres.');
     else showToast('Erro ao cadastrar.');
   }
 };
 
-// Login no Firebase
+// Validação de Entrada (Login)
 window.doLogin = async function() {
-  const email = document.getElementById('log-email').value;
-  const pass = document.getElementById('log-pass').value;
+  const email = document.getElementById('log-email').value.trim();
+  const pass = document.getElementById('log-pass').value.trim();
+
+  if (!email || !pass) {
+    showToast('Preencha e-mail e senha!');
+    return;
+  }
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
@@ -77,16 +98,16 @@ window.doLogin = async function() {
   }
 };
 
-// Atualiza o Cabeçalho
-function updateHeaderGreeting(nick) {
-  if (nick) {
+// Atualização dinâmica de boas-vindas no topo do App
+function updateHeaderGreeting(name) {
+  if (name) {
     const d = new Date();
     const dateStr = d.toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric', month: 'long'});
     const greeting = d.getHours() < 12 ? 'Bom dia' : d.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
     
     const hdElement = document.getElementById('hd');
     if (hdElement) {
-      hdElement.innerHTML = `${greeting}, <b>${nick}</b>! Hoje é ${dateStr}.`;
+      hdElement.innerHTML = `${greeting}, <b>${name}</b>! Hoje é ${dateStr}.`;
     }
   }
 }

@@ -10,6 +10,27 @@
 }
 body { font-family: 'DM Sans', sans-serif; background: var(--cl); color: var(--tp); min-height: 100vh; font-size: 14px; }
 
+/* ── AUTH SCREEN ── */
+.auth-wrapper {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: var(--cl); display: flex; align-items: center; justify-content: center;
+  z-index: 9999; padding: 20px; transition: opacity 0.3s ease;
+}
+.auth-card {
+  background: #fff; border: .5px solid var(--bds); border-radius: var(--rad-lg);
+  padding: 30px 20px; width: 100%; max-width: 340px; text-align: center;
+  box-shadow: 0 10px 40px rgba(28, 16, 8, 0.08); animation: fadeIn .3s ease;
+}
+.auth-logo {
+  font-family: 'Playfair Display', serif; color: var(--cc); font-size: 32px;
+  font-weight: 500; margin-bottom: 24px; background: var(--cd);
+  text-align: center; padding: 14px; border-radius: var(--rad); letter-spacing: .5px;
+}
+#view-login, #view-register { text-align: left; }
+#view-login .fg, #view-register .fg { margin-bottom: 14px; }
+.btn-auth-trigger { width: 100%; margin-top: 8px; padding: 11px; font-size: 13px; }
+.auth-divider { text-align: center; font-size: 11px; color: var(--tm); margin: 10px 0; text-transform: uppercase; letter-spacing: 1px; }
+
 /* ── HEADER ── */
 .app-header { background: var(--cd); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
 .app-title { font-family: 'Playfair Display', serif; color: var(--cc); font-size: 20px; font-weight: 400; letter-spacing: .4px; }

@@ -23,6 +23,39 @@
 </head>
 <body>
 
+<div id="auth-screen" class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">BrewTracker</div>
+    
+    <div id="view-login">
+      <div class="fg"><label>E-mail</label><input type="email" id="log-email" placeholder="seu@email.com"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="log-pass" placeholder="••••••••"></div>
+      <button class="btn-save btn-auth-trigger" onclick="doLogin()">Entrar</button>
+      
+      <div class="auth-divider">ou</div>
+      <button class="btn-cancel btn-auth-trigger" onclick="showRegisterForm()">Cadastrar</button>
+    </div>
+
+    <div id="view-register" class="hidden">
+      <div class="fg"><label>Nome completo</label><input type="text" id="reg-name" placeholder="Seu nome completo"></div>
+      <div class="fg"><label>E-mail</label><input type="email" id="reg-email" placeholder="seu@email.com"></div>
+      <div class="fg"><label>Senha</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres"></div>
+      <div class="fg">
+        <label>Nível de aprendizado no café</label>
+        <select id="reg-level">
+          <option value="iniciante">Iniciante</option>
+          <option value="intermediario">Intermediário</option>
+          <option value="avancado">Avançado</option>
+        </select>
+      </div>
+      <div class="form-actions" style="margin-top: 18px;">
+        <button class="btn-cancel" onclick="showLoginForm()">Voltar</button>
+        <button class="btn-save" onclick="doRegister()">Cadastrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="app-header">
   <div>
     <div class="app-title">café <em>diário</em></div>
@@ -400,12 +433,13 @@
   }
 </script>
 
-<script type="module" src="./js/auth.js"></script> <script src="./js/app.js"></script>
-<script src="./js/cafes.js"></script>
-<script src="./js/equipamentos.js"></script>
-<script src="./js/metodos.js"></script>
-<script src="./js/receitas.js"></script>
-<script src="./js/diario.js"></script>
+<script type="module" src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script type="module" src="js/cafes.js"></script>
+<script type="module" src="js/equipamentos.js"></script>
+<script type="module" src="js/metodos.js"></script>
+<script type="module" src="js/receitas.js"></script>
+<script type="module" src="js/diario.js"></script>
 
 </body>
 </html>

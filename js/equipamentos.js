@@ -1,4 +1,7 @@
-function renderEquipFields() {
+import { auth, db } from './firebase.js';
+import { collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+window.renderEquipFields = function() {
   const cat = val('e-cat');
   const specs = $('e-specs');
   let html = '';
@@ -29,7 +32,7 @@ function renderEquipFields() {
       </div>`;
   }
   specs.innerHTML = html;
-}
+};
 
 function getEquipSpecs() {
   const cat = val('e-cat');
@@ -48,62 +51,72 @@ function getEquipSpecs() {
   return specs;
 }
 
-function saveEquip() {
+window.saveEquip = async function() {
+  const user = auth.currentUser;
+  if (!user) return;
+
   const marca = val('e-marca'), modelo = val('e-modelo');
   if (!marca || !modelo) { showToast('Informe marca e modelo'); return; }
+
   const obj = {
-    id: uid(), cat: val('e-cat'), marca, modelo,
+    userId: user.uid,
+    cat: val('e-cat'), marca, modelo,
     versao: val('e-versao'), status: val('e-status'),
     compra: val('e-compra'), manut: val('e-manut'),
-    serial: val('e-serial'), notas: val('e-notas'),
-    specs: getEquipSpecs()
+    serial: val('e-serial'), notas: val('e-notes'),
+    specs: getEquipSpecs(),
+    createdAt: Date.now()
   };
-  const data = ls('equipamentos'); data.push(obj); lsSet('equipamentos', data);
-  showToast('Equipamento salvo!');
-  toggleForm('form-equip');
-  renderEquip();
-}
 
-const equipIcons = {
-  'Moedor manual': 'ti-rotate-clockwise', 'Moedor elétrico': 'ti-settings',
-  'Máquina de espresso': 'ti-device-desktop', 'Chaleira': 'ti-droplet',
-  'Balança': 'ti-scale', 'Termômetro': 'ti-temperature', 'Refratômetro': 'ti-eye',
-  'Acessório': 'ti-adjustments', 'Outros': 'ti-tool'
+  try {
+    await addDoc(collection(db, "equipamentos"), obj);
+    showToast('Equipamento salvo na nuvem!');
+    toggleForm('form-equip');
+    renderEquip();
+  } catch (e) {
+    showToast('Erro ao salvar equipamento.');
+  }
 };
 
-function renderEquip() {
+window.renderEquip = async function() {
+  const user = auth.currentUser;
   const list = $('equip-list');
-  const data = ls('equipamentos');
-  if (!data.length) { list.innerHTML = '<div class="empty"><i class="ti ti-tool"></i><p>Nenhum equipamento cadastrado ainda.</p></div>'; return; }
-  const cats = [...new Set(data.map(e => e.cat))];
-  list.innerHTML = cats.map(cat => {
-    const items = data.filter(e => e.cat === cat);
-    return `<div class="sdiv">${cat}</div>` + items.slice().reverse().map(e => {
-      const icon = equipIcons[e.cat] || 'ti-tool';
-      const sc = e.status === 'Ativo' ? 'b-ativo' : e.status === 'Inativo' ? 'b-inativo' : 'b-vendido';
-      let specsStr = '';
-      if (e.specs) {
-        const s = e.specs;
-        const parts = [];
-        if (s.moTipo) parts.push(s.moTipo);
-        if (s.moMm) parts.push(s.moMm + 'mm');
-        if (s.moAjuste) parts.push(s.moAjuste);
-        if (s.espBoiler) parts.push(s.espBoiler);
-        if (s.espPf) parts.push(s.espPf + 'mm');
-        if (s.espPid) parts.push('PID');
-        if (s.chalEl) parts.push('Elétrica');
-        if (s.chalTemp) parts.push('Temp. preciso');
-        if (s.balPrec) parts.push('Precisão ' + s.balPrec);
-        specsStr = parts.join(' · ');
-      }
-      return `<div class="equip-card">
-        <div class="eq-icon"><i class="ti ${icon}"></i></div>
-        <div class="eq-body">
-          <div class="eq-name">${e.marca} ${e.modelo}${e.versao ? ' <span style="font-size:10px;color:var(--tm)">' + e.versao + '</span>' : ''}</div>
-          <div class="eq-detail">${e.cat}${specsStr ? ' · ' + specsStr : ''}</div>
-          <div class="eq-tags"><span class="eq-tag ${sc}">${e.status}</span>${e.compra ? `<span class="eq-tag">Compra: ${e.compra}</span>` : ''}</div>
-        </div>
-      </div>`;
+  if (!user || !list) return;
+
+  try {
+    const q = query(collection(db, "equipamentos"), where("userId", "==", user.uid));
+    const snap = await getDocs(q);
+    const data = [];
+    snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+    data.sort((a,b) => b.createdAt - a.createdAt);
+
+    if (!data.length) { list.innerHTML = '<div class="empty"><i class="ti ti-tool"></i><p>Nenhum equipamento cadastrado ainda.</p></div>'; return; }
+
+    const cats = [...new Set(data.map(e => e.cat))];
+    const equipIcons = { 'Moedor manual': 'ti-rotate-clockwise', 'Moedor elétrico': 'ti-settings', 'Máquina de espresso': 'ti-device-desktop', 'Chaleira': 'ti-droplet', 'Balança': 'ti-scale', 'Termômetro': 'ti-temperature', 'Refratômetro': 'ti-eye', 'Acessório': 'ti-adjustments', 'Outros': 'ti-tool' };
+
+    list.innerHTML = cats.map(cat => {
+      const items = data.filter(e => e.cat === cat);
+      return `<div class="sdiv">${cat}</div>` + items.map(e => {
+        const icon = equipIcons[e.cat] || 'ti-tool';
+        const sc = e.status === 'Ativo' ? 'b-ativo' : e.status === 'Inativo' ? 'b-inativo' : 'b-vendido';
+        let specsStr = '';
+        if (e.specs) {
+          const s = e.specs; const parts = [];
+          if (s.moTipo) parts.push(s.moTipo); if (s.moMm) parts.push(s.moMm + 'mm'); if (s.moAjuste) parts.push(s.moAjuste);
+          if (s.espBoiler) parts.push(s.espBoiler); if (s.espPf) parts.push(s.espPf + 'mm'); if (s.espPid) parts.push('PID');
+          if (s.chalEl) parts.push('Elétrica'); if (s.chalTemp) parts.push('Temp. preciso'); if (s.balPrec) parts.push('Precisão ' + s.balPrec);
+          specsStr = parts.join(' · ');
+        }
+        return `<div class="equip-card">
+          <div class="eq-icon"><i class="ti ${icon}"></i></div>
+          <div class="eq-body">
+            <div class="eq-name">${e.marca} ${e.modelo}${e.versao ? ' <span style="font-size:10px;color:var(--tm)">' + e.versao + '</span>' : ''}</div>
+            <div class="eq-detail">${e.cat}${specsStr ? ' · ' + specsStr : ''}</div>
+            <div class="eq-tags"><span class="eq-tag ${sc}">${e.status}</span></div>
+          </div>
+        </div>`;
+      }).join('');
     }).join('');
-  }).join('');
-}
+  } catch (err) { console.error(err); }
+};
