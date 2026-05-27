@@ -4,7 +4,8 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   updateProfile,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -98,16 +99,25 @@ window.doLogin = async function() {
   }
 };
 
+// Função SignOut
+window.doLogout = async function() {
+  try {
+    await signOut(auth);
+    window.toggleSidebar(); // Fecha o menu ao sair
+    showToast('Você saiu da conta.');
+  } catch (error) {
+    showToast('Erro ao sair.');
+  }
+};
+
 // Atualização dinâmica de boas-vindas no topo do App
 function updateHeaderGreeting(name) {
   if (name) {
     const d = new Date();
-    const dateStr = d.toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric', month: 'long'});
     const greeting = d.getHours() < 12 ? 'Bom dia' : d.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
-    
     const hdElement = document.getElementById('hd');
     if (hdElement) {
-      hdElement.innerHTML = `${greeting}, <b>${name}</b>! Hoje é ${dateStr}.`;
+      hdElement.innerHTML = `${greeting}, <b>${name}</b>!;
     }
   }
 }

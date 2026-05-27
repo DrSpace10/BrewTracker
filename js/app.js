@@ -55,3 +55,17 @@ window.addEventListener('DOMContentLoaded', () => {
   populateDiarioSelects();
   renderDiario();
 });
+
+// Controle do Menu Lateral (Sidebar)
+window.toggleSidebar = function() {
+  const sb = document.getElementById('sidebar-menu');
+  const ov = document.getElementById('sidebar-overlay');
+  
+  if (sb.classList.contains('open')) {
+    sb.classList.remove('open');
+    ov.classList.remove('show');
+  } else {
+    sb.classList.add('open');
+    ov.classList.add('show');
+  }
+};

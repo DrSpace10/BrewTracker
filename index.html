@@ -61,7 +61,7 @@
     <div class="app-title">café <em>diário</em></div>
     <div class="hd" id="hd"></div>
   </div>
-  <i class="ti ti-coffee" style="font-size:22px;color:var(--cw)" aria-hidden="true"></i>
+  <i class="ti ti-menu-2" style="font-size:24px; color:var(--cw); cursor:pointer" onclick="toggleSidebar()"></i>
 </div>
 
 <div class="tab-bar">
@@ -422,6 +422,26 @@
   </div>
 
 </div><div class="toast" id="toast"></div>
+
+<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+<div id="sidebar-menu" class="sidebar">
+  <div class="sidebar-header">
+    <div class="app-title" style="font-size:18px;">configurações</div>
+    <i class="ti ti-x" onclick="toggleSidebar()" style="cursor:pointer; font-size:20px; color:var(--ts)"></i>
+  </div>
+  
+  <div class="sidebar-content">
+    <a href="#" class="side-link"><i class="ti ti-user"></i> Meu Perfil</a>
+    <a href="#" class="side-link"><i class="ti ti-database-export"></i> Exportar Dados</a>
+    <a href="#" class="side-link"><i class="ti ti-settings"></i> Preferências</a>
+  </div>
+  
+  <div class="sidebar-footer">
+    <button class="btn-cancel" style="width:100%; border-color:var(--fg-err); color:var(--fg-err);" onclick="doLogout()">
+      <i class="ti ti-logout"></i> Sair da conta
+    </button>
+  </div>
+</div>
 
 <script>
   if ('serviceWorker' in navigator) {
